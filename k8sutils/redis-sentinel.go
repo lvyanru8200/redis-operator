@@ -253,48 +253,48 @@ func (service RedisSentinelService) CreateRedisSentinelService(cr *redisv1beta2.
 }
 
 func getSentinelEnvVariable(ctx context.Context, client kubernetes.Interface, logger logr.Logger, cr *redisv1beta2.RedisSentinel, dcl dynamic.Interface) *[]corev1.EnvVar {
-	if cr.Spec.RedisSentinelConfig == nil {
-		return &[]corev1.EnvVar{}
-	}
+	//if cr.Spec.RedisSentinelConfig == nil {
+	//	return &[]corev1.EnvVar{}
+	//}
 
-	envVar := &[]corev1.EnvVar{
-		{
-			Name:  "MASTER_GROUP_NAME",
-			Value: cr.Spec.RedisSentinelConfig.MasterGroupName,
-		},
-		{
-			Name:  "IP",
-			Value: getRedisReplicationMasterIP(ctx, client, logger, cr, dcl),
-		},
-		{
-			Name:  "PORT",
-			Value: cr.Spec.RedisSentinelConfig.RedisPort,
-		},
-		{
-			Name:  "QUORUM",
-			Value: cr.Spec.RedisSentinelConfig.Quorum,
-		},
-		{
-			Name:  "DOWN_AFTER_MILLISECONDS",
-			Value: cr.Spec.RedisSentinelConfig.DownAfterMilliseconds,
-		},
-		{
-			Name:  "PARALLEL_SYNCS",
-			Value: cr.Spec.RedisSentinelConfig.ParallelSyncs,
-		},
-		{
-			Name:  "FAILOVER_TIMEOUT",
-			Value: cr.Spec.RedisSentinelConfig.FailoverTimeout,
-		},
-	}
+	//envVar := &[]corev1.EnvVar{
+	//	{
+	//		Name:  "MASTER_GROUP_NAME",
+	//		Value: cr.Spec.RedisSentinelConfig.MasterGroupName,
+	//	},
+	//	{
+	//		Name:  "IP",
+	//		Value: getRedisReplicationMasterIP(ctx, client, logger, cr, dcl),
+	//	},
+	//	{
+	//		Name:  "PORT",
+	//		Value: cr.Spec.RedisSentinelConfig.RedisPort,
+	//	},
+	//	{
+	//		Name:  "QUORUM",
+	//		Value: cr.Spec.RedisSentinelConfig.Quorum,
+	//	},
+	//	{
+	//		Name:  "DOWN_AFTER_MILLISECONDS",
+	//		Value: cr.Spec.RedisSentinelConfig.DownAfterMilliseconds,
+	//	},
+	//	{
+	//		Name:  "PARALLEL_SYNCS",
+	//		Value: cr.Spec.RedisSentinelConfig.ParallelSyncs,
+	//	},
+	//	{
+	//		Name:  "FAILOVER_TIMEOUT",
+	//		Value: cr.Spec.RedisSentinelConfig.FailoverTimeout,
+	//	},
+	//}
 
-	if cr.Spec.RedisSentinelConfig != nil && cr.Spec.RedisSentinelConfig.RedisReplicationPassword != nil {
-		*envVar = append(*envVar, corev1.EnvVar{
-			Name:      "MASTER_PASSWORD",
-			ValueFrom: cr.Spec.RedisSentinelConfig.RedisReplicationPassword,
-		})
-	}
-	return envVar
+	//if cr.Spec.RedisSentinelConfig != nil && cr.Spec.RedisSentinelConfig.RedisReplicationPassword != nil {
+	//	*envVar = append(*envVar, corev1.EnvVar{
+	//		Name:      "MASTER_PASSWORD",
+	//		ValueFrom: cr.Spec.RedisSentinelConfig.RedisReplicationPassword,
+	//	})
+	//}
+	return &[]corev1.EnvVar{}
 }
 
 func getRedisReplicationMasterIP(ctx context.Context, client kubernetes.Interface, logger logr.Logger, cr *redisv1beta2.RedisSentinel, dcl dynamic.Interface) string {

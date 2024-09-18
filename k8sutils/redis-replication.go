@@ -2,6 +2,7 @@ package k8sutils
 
 import (
 	"context"
+	"fmt"
 
 	redisv1beta2 "github.com/OT-CONTAINER-KIT/redis-operator/api/v1beta2"
 	"github.com/OT-CONTAINER-KIT/redis-operator/pkg/util"
@@ -31,7 +32,7 @@ func CreateReplicationService(cr *redisv1beta2.RedisReplication, cl kubernetes.I
 	}
 	objectMetaInfo := generateObjectMetaInformation(cr.ObjectMeta.Name, cr.Namespace, labels, annotations)
 	headlessObjectMetaInfo := generateObjectMetaInformation(cr.ObjectMeta.Name+"-headless", cr.Namespace, labels, annotations)
-	additionalObjectMetaInfo := generateObjectMetaInformation(cr.ObjectMeta.Name+"-additional", cr.Namespace, labels, generateServiceAnots(cr.ObjectMeta, additionalServiceAnnotations, epp))
+	//additionalObjectMetaInfo := generateObjectMetaInformation(cr.ObjectMeta.Name+"-additional", cr.Namespace, labels, generateServiceAnots(cr.ObjectMeta, additionalServiceAnnotations, epp))
 	err := CreateOrUpdateService(cr.Namespace, headlessObjectMetaInfo, redisReplicationAsOwner(cr), disableMetrics, true, "ClusterIP", redisPort, cl)
 	if err != nil {
 		logger.Error(err, "Cannot create replication headless service for Redis")
@@ -46,11 +47,22 @@ func CreateReplicationService(cr *redisv1beta2.RedisReplication, cl kubernetes.I
 	if cr.Spec.KubernetesConfig.Service != nil {
 		additionalServiceType = cr.Spec.KubernetesConfig.Service.ServiceType
 	}
-	err = CreateOrUpdateService(cr.Namespace, additionalObjectMetaInfo, redisReplicationAsOwner(cr), disableMetrics, false, additionalServiceType, redisPort, cl)
-	if err != nil {
-		logger.Error(err, "Cannot create additional service for Redis Replication")
-		return err
+	size := *cr.Spec.Size
+	for i := 0; i < int(size); i++ {
+		podName := fmt.Sprintf("%s-%d", cr.ObjectMeta.Name+"-additional", i)
+		labels := getRedisLabelsAdd(cr.ObjectMeta.Name, podName, replication, "replication", cr.ObjectMeta.Labels)
+		additionalObjectMetaInfo := generateObjectMetaInformation(podName, cr.Namespace, labels, generateServiceAnots(cr.ObjectMeta, additionalServiceAnnotations, epp))
+		err = CreateOrUpdateService(cr.Namespace, additionalObjectMetaInfo, redisReplicationAsOwner(cr), disableMetrics, false, additionalServiceType, redisPort, cl)
+		if err != nil {
+			logger.Error(err, "Cannot create replication service for Redis")
+			return err
+		}
 	}
+	//err = CreateOrUpdateService(cr.Namespace, additionalObjectMetaInfo, redisReplicationAsOwner(cr), disableMetrics, false, additionalServiceType, redisPort, cl)
+	//if err != nil {
+	//	logger.Error(err, "Cannot create additional service for Redis Replication")
+	//	return err
+	//}
 	return nil
 }
 

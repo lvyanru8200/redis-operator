@@ -14,6 +14,7 @@ import (
 	redis "github.com/redis/go-redis/v9"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/remotecommand"
@@ -69,6 +70,28 @@ func getRedisServerAddress(client kubernetes.Interface, logger logr.Logger, rd R
 func getRedisHostname(redisInfo RedisDetails, cr *redisv1beta2.RedisCluster, role string) string {
 	fqdn := fmt.Sprintf("%s.%s-%s-headless.%s.svc", redisInfo.PodName, cr.ObjectMeta.Name, role, cr.Namespace)
 	return fqdn
+}
+
+func GetRedisNodePortList(ctx context.Context, client kubernetes.Interface, logger logr.Logger, redisReplicationName, namespace, hostIp string) ([]string, error) {
+	serviceNodePortLabel := labels.FormatLabels(GetRedisReplicationLabelsBySentinel(redisReplicationName))
+	serviceList, err := client.CoreV1().Services(namespace).List(ctx, metav1.ListOptions{
+		LabelSelector: serviceNodePortLabel,
+	})
+	if err != nil {
+		logger.Error(err, "Error in getting service list")
+		return nil, err
+	}
+	addrList := make([]string, 0)
+	for _, service := range serviceList.Items {
+		for _, port := range service.Spec.Ports {
+			if port.Port == 6379 {
+				addrList = append(addrList, fmt.Sprintf("%s:%d", hostIp, port.NodePort))
+				logger.V(1).Info("Redis NodePort Addr", "HostIp", hostIp, "NodePort", port.NodePort)
+				return nil, err
+			}
+		}
+	}
+	return addrList, nil
 }
 
 // CreateSingleLeaderRedisCommand will create command for single leader cluster creation

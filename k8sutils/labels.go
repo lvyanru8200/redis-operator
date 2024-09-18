@@ -150,6 +150,30 @@ func getRedisLabels(name string, st setupType, role string, labels map[string]st
 	return lbls
 }
 
+func getRedisLabelsAdd(name, podName string, st setupType, role string, labels map[string]string) map[string]string {
+	lbls := map[string]string{
+		"app":              name,
+		"redis_setup_type": string(st),
+		"role":             role,
+		"type":             "external",
+		"pod_name":         podName,
+	}
+	for k, v := range labels {
+		lbls[k] = v
+	}
+	return lbls
+}
+
+func GetRedisReplicationLabelsBySentinel(replicationName string) map[string]string {
+	lbls := map[string]string{
+		"app":              replicationName,
+		"redis_setup_type": string(replication),
+		"role":             "replication",
+		"type":             "external",
+	}
+	return lbls
+}
+
 func GetRedisReplicationLabels(cr *redisv1beta2.RedisReplication) map[string]string {
 	return getRedisLabels(cr.GetName(), replication, "replication", cr.GetLabels())
 }

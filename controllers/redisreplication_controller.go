@@ -49,11 +49,20 @@ func (r *RedisReplicationReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	if err = k8sutils.AddFinalizer(instance, k8sutils.RedisReplicationFinalizer, r.Client); err != nil {
 		return intctrlutil.RequeueWithError(err, reqLogger, "")
 	}
-	err = k8sutils.CreateReplicationRedis(instance, r.K8sClient)
+	err = k8sutils.CreateReplicationService(instance, r.K8sClient)
 	if err != nil {
 		return intctrlutil.RequeueWithError(err, reqLogger, "")
 	}
-	err = k8sutils.CreateReplicationService(instance, r.K8sClient)
+
+	if instance.Spec.KubernetesConfig.Service.ServiceType == "NodePort" {
+		addrs, err := k8sutils.GetRedisNodePortList(ctx, r.K8sClient, r.Log, instance.Name, instance.Namespace, "hostIp")
+		if err != nil {
+			return intctrlutil.RequeueWithError(err, reqLogger, "")
+		}
+
+	}
+
+	err = k8sutils.CreateReplicationRedis(instance, r.K8sClient)
 	if err != nil {
 		return intctrlutil.RequeueWithError(err, reqLogger, "")
 	}
